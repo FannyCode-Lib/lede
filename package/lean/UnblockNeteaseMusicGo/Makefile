@@ -1,16 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=UnblockNeteaseMusicGo
-PKG_VERSION:=0.1.6
-PKG_RELEASE:=5
+PKG_VERSION:=0.2.7
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/cnsilvan/UnblockNeteaseMusic.git
-PKG_SOURCE_VERSION:=4785d416e4ba33e38e446fa15f6791534d0ac182
+PKG_SOURCE_VERSION:=935a28125fc7eafaa8273a77352e6262b18efd5e
 PKG_MAINTAINER:=Silvan <cnsilvan@gmail.com>
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
-PKG_SOURCE:=$(PKG_SOURCE_SUBDIR)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_SOURCE_SUBDIR)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
 PKG_BUILD_DEPENDS:=golang/host
@@ -24,6 +24,19 @@ GO_PKG_LDFLAGS_X:= \
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
+
+define Package/$(PKG_NAME)/config
+config $(PKG_NAME)_INCLUDE_GOPROXY
+	bool "Compiling with GOPROXY proxy"
+	default y
+
+endef
+
+ifeq ($(CONFIG_$(PKG_NAME)_INCLUDE_GOPROXY),y)
+export GO111MODULE=on
+export GOPROXY=https://goproxy.io
+#export GOPROXY=https://mirrors.aliyun.com/goproxy/
+endif
 
 define Package/$(PKG_NAME)
 	SECTION:=net
@@ -40,12 +53,10 @@ endef
 
 define Build/Prepare
 	tar -zxvf $(DL_DIR)/$(PKG_SOURCE) -C $(BUILD_DIR)/$(PKG_NAME) --strip-components 1
-	$(CP) ./001-endpoint.patch $(BUILD_DIR)/$(PKG_NAME)/
-	patch -d $(BUILD_DIR)/$(PKG_NAME) -p1 < 001-endpoint.patch
 endef
 
 define Build/Configure
-
+  
 endef
 
 define Build/Compile
@@ -61,7 +72,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/UnblockNeteaseMusic $(1)/usr/bin/UnblockNeteaseMusic
 	$(INSTALL_DIR) $(1)/usr/share/UnblockNeteaseMusicGo
 	$(CP) ./files/* $(1)/usr/share/UnblockNeteaseMusicGo/
-	
 endef
 $(eval $(call GoBinPackage,$(PKG_NAME)))
 $(eval $(call BuildPackage,$(PKG_NAME)))
